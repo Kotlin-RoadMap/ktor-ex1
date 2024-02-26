@@ -4,17 +4,31 @@ import com.example.data.DataManager
 import com.example.data.Order
 import io.ktor.http.*
 import io.ktor.server.application.*
+import io.ktor.server.locations.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import java.util.*
+import java.util.UUID
+
+@Location("/order/list")
+data class OrderListLocation(val sortBy: String, val asc: Boolean)
 
 fun Route.routes() {
-    val orderManager = DataManager()
+    val orderManager = DataManager
+
+    get<OrderListLocation>() {
+        call.respond(orderManager.sortOrders(it.sortBy, it.asc))
+    }
 
     route("/order") {
         get("/") {
             call.respond(orderManager.getAllOrders())
+        }
+
+        post("/") {
+            val order = call.receive(Order::class)
+            orderManager.addOrder(order)
+            call.respond(order)
         }
 
         put("/") {
@@ -22,12 +36,6 @@ fun Route.routes() {
             val updateOrder = orderManager.updateOrder(receive)
                 ?: return@put call.respond(HttpStatusCode.BadRequest)
             call.respond(updateOrder)
-        }
-
-        post("/") {
-            val order = call.receive(Order::class)
-            orderManager.addOrder(order)
-            call.respond(order)
         }
 
         delete("/{id}") {
