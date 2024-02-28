@@ -10,39 +10,45 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import java.util.UUID
 
-@Location("/order/list")
+@Resource("/api/book/list")
 data class OrderListLocation(val sortBy: String, val asc: Boolean)
 
-fun Route.routes() {
-    val orderManager = DataManager
+fun Route.routes() {    
+    val dataManager = DataManager()
 
-    get<OrderListLocation>() {
-        call.respond(orderManager.sortOrders(it.sortBy, it.asc))
-    }
-
-    route("/order") {
-        get("/") {
-            call.respond(orderManager.getAllOrders())
-        }
-
-        post("/") {
-            val order = call.receive(Order::class)
-            orderManager.addOrder(order)
-            call.respond(order)
-        }
-
-        put("/") {
-            val receive = call.receive(Order::class)
-            val updateOrder = orderManager.updateOrder(receive)
-                ?: return@put call.respond(HttpStatusCode.BadRequest)
-            call.respond(updateOrder)
-        }
-
-        delete("/{id}") {
-            val id: String = call.parameters["id"]
-                ?: return@delete call.respond(HttpStatusCode.BadRequest)
-            val removeOrder: Order = orderManager.removeOrder(UUID.fromString(id))
-            call.respond(removeOrder)
+    authenticate("bookStoreAuth") {
+        get<BookListResource>() {
+            call.respond(dataManager.sortedBooks(it.sortby, it.asc))
         }
     }
+
+//    get<OrderListLocation>() {
+//        call.respond(orderManager.sortOrders(it.sortBy, it.asc))
+//    }
+//
+//    route("/order") {
+//        get("/") {
+//            call.respond(orderManager.getAllOrders())
+//        }
+//
+//        post("/") {
+//            val order = call.receive(Order::class)
+//            orderManager.addOrder(order)
+//            call.respond(order)
+//        }
+//
+//        put("/") {
+//            val receive = call.receive(Order::class)
+//            val updateOrder = orderManager.updateOrder(receive)
+//                ?: return@put call.respond(HttpStatusCode.BadRequest)
+//            call.respond(updateOrder)
+//        }
+//
+//        delete("/{id}") {
+//            val id: String = call.parameters["id"]
+//                ?: return@delete call.respond(HttpStatusCode.BadRequest)
+//            val removeOrder: Order = orderManager.removeOrder(UUID.fromString(id))
+//            call.respond(removeOrder)
+//        }
+//    }
 }
